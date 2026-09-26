@@ -1,0 +1,96 @@
+# Throwaway check for Micopay/micopay-protocol#394 (cross-env). Lives only on the
+# contributor's fork, on a branch that is not part of the PR.
+name: ci394 cross-env check
+
+on:
+  push:
+    branches: [ci394-cross-env-check]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BASE_SHA: 4740239a8949e55b2e548128eafafd56d2af91ee
+  BACKEND_DIR: micopay/backend
+  RESULTS_DIR: ci394-results
+
+jobs:
+  scripts:
+    name: scripts (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: npm ci (micopay/backend)
+        working-directory: micopay/backend
+        run: npm ci --no-audit --no-fund
+
+      - name: before the change, no database
+        run: node .github/ci394/run16.mjs before nodb
+
+      - name: after the change, no database
+        run: node .github/ci394/run16.mjs after nodb
+
+      - name: npm run build (after the change)
+        working-directory: micopay/backend
+        run: npm run build
+
+      - name: start PostgreSQL (Linux)
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'root';"
+
+      - name: start PostgreSQL (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $pgService = Get-Service -Name postgresql*
+          Set-Service -InputObject $pgService -Status running -StartupType automatic
+          & "$env:PGBIN\pg_isready.exe"
+
+      - name: before the change, fresh PostgreSQL
+        continue-on-error: true
+        env:
+          PG_ADMIN_URL: postgres://postgres:root@localhost:5432/postgres
+        run: node .github/ci394/run16.mjs before db
+
+      - name: after the change, fresh PostgreSQL
+        continue-on-error: true
+        env:
+          PG_ADMIN_URL: postgres://postgres:root@localhost:5432/postgres
+        run: node .github/ci394/run16.mjs after db
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci394-${{ runner.os }}
+          path: ci394-results
+
+  report:
+    needs: scripts
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: ci394-results
+
+      - name: summary table
+        run: node .github/ci394/run16.mjs report
