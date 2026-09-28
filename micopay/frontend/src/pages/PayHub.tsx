@@ -33,7 +33,7 @@ const PayHub = ({ onSend, onReceive }: PayHubProps) => {
             {/* El icono FIJA su color: el boton es `text-papel` y el tile es
                 `bg-papel`, asi que heredarlo lo dejaba papel sobre papel. */}
             <span className="w-12 h-12 rounded-sm bg-papel flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-verde">arrow_upward</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-2xl text-verde">arrow_upward</span>
             </span>
             <span className="font-headline font-bold text-lg">{t('pay.send')}</span>
             <span className="text-[12px] text-papel text-left leading-snug">{t('pay.sendDesc')}</span>
@@ -44,7 +44,7 @@ const PayHub = ({ onSend, onReceive }: PayHubProps) => {
             className="bg-papel border-2 border-tinta rounded-sm p-6 flex flex-col items-start gap-3 active:translate-x-[2px] active:translate-y-[2px] transition-all"
           >
             <span className="w-12 h-12 rounded-sm bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-primary">qr_code_2</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-2xl text-primary">qr_code_2</span>
             </span>
             <span className="font-headline font-bold text-lg text-on-surface">{t('pay.receive')}</span>
             <span className="text-[12px] text-on-surface-variant text-left leading-snug">{t('pay.receiveDesc')}</span>
