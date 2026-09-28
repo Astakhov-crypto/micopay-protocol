@@ -48,7 +48,13 @@ describe('el chat de depósito no promete una garantía que no existe', () => {
 
   it('solo dice que el agente bloqueó cuando de verdad bloqueó', () => {
     // El texto afirmativo queda condicionado; antes se pintaba siempre.
-    expect(chat).toMatch(/escrowStatus === 'locked'[\s\S]{0,200}agentFoundDesc/);
+    // #390: la garantía sigue vigente en `revealing` (el agente ya confirmó el
+    // efectivo y los fondos siguen en el escrow), así que la condición cubre
+    // `locked` y `revealing`, y nunca `pending`.
+    expect(chat).toMatch(
+      /fondosEnGarantia = escrowStatus === 'locked' \|\| escrowStatus === 'revealing';/,
+    );
+    expect(chat).toMatch(/fondosEnGarantia[\s\S]{0,200}agentFoundDesc/);
   });
 
   it('mientras no hay garantía, avisa de NO entregar el efectivo', () => {
